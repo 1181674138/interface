@@ -1,0 +1,15 @@
+-
+  name: 正常用例
+  method: post
+  url: xxx
+  param_type: FORM
+  data:
+    token:
+    id:
+  assert:
+    contain:
+    eq:
+      msg: '请求成功'
+      code: 0
+      status: 200
+    not_null: ['id', 'msg']

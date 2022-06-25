@@ -1,0 +1,139 @@
+import pytest
+import json
+import requests
+import re
+
+tmp = []
+key_list = []
+
+class Judgeassert:
+
+    """
+    1、json_result是response返回的json字符串，read_yaml_assert是读取到yaml里的断言字符串
+    2、yaml文件里的判断格式必须严格按照要求写
+    3、eq_assert断言返回值里第一层的内容
+    4、contain_assert断言返回值内是否包含关键字
+    5、notnull_assert断言返回值的某些key是否为空
+    """
+
+    def all_assert(self, json_result, read_yaml_assert):
+
+        read_yaml_assert = read_yaml_assert['assert']
+
+        if 'eq' in read_yaml_assert and read_yaml_assert['eq'] is not None:
+            self.eq_assert(json_result, read_yaml_assert)
+        if 'contain' in read_yaml_assert and read_yaml_assert['contain'] is not None:
+            self.contain_assert(json_result, read_yaml_assert)
+        if 'not_null' in read_yaml_assert and read_yaml_assert['not_null'] is not None:
+            self.notnull_assert(json_result, read_yaml_assert)
+        else:
+            pass
+
+    # 断言等于
+    def eq_assert(self, json_result, read_yaml_assert):
+        if 'eq' in read_yaml_assert:
+            for i in read_yaml_assert['eq']:
+                if read_yaml_assert['eq'][i] == json_result[i]:
+                    assert True
+                else:
+                    assert False
+        else:
+            pass
+
+    # 断言包含
+    def contain_assert(self, json_result, read_yaml_assert):
+        if 'contain' in read_yaml_assert:
+            assert re.search(str(read_yaml_assert['contain']), str(json_result))
+        else:
+            pass
+
+    # 断言字段不为空
+    def notnull_assert(self, json_result, read_yaml_assert):
+
+        if 'not_null' in read_yaml_assert:
+
+            # 获取到断言里不为空的key的value
+            get_value_list = self.ttt(json_result, read_yaml_assert)
+            for i in get_value_list:
+                if i is None:
+                    assert False
+                else:
+                    assert True
+
+            get_key_list = list(self.get_target_key(json_result, key_list))
+            for j in read_yaml_assert['not_null']:
+                print(j)
+                print(get_key_list)
+                assert j in get_key_list
+        else:
+            pass
+
+    # 只作判断
+    def ttt(self, json_result, read_yaml_assert):
+
+        key = read_yaml_assert['not_null']
+        # key = read_yaml_assert
+
+        if type(key) == str:
+            self.get_target_value(key, json_result, tmp)
+        elif type(key) == list:
+            for i in key:
+                self.get_target_value(i, json_result, tmp)
+        return tmp
+
+    # 遍历value，返回传入的key对于的value
+    def get_target_value(self, key, dic, tmp_list):
+        """
+        :param key: 目标key值
+        :param dic: JSON数据
+        :param tmp_list: 用于存储获取的数据
+        :return: list
+        """
+        if not isinstance(dic, dict) or not isinstance(tmp_list, list):  # 对传入数据进行格式校验
+            return 'argv[1] not an dict or argv[-1] not an list '
+        if key in dic.keys():
+            tmp_list.append(dic[key])  # 传入数据存在则存入tmp_list
+            for val in dic.values():
+                if isinstance(val, dict):
+                    self.get_target_value(key, val, tmp_list)  # 传入数据的value值是字典，则直接调用自身
+                elif isinstance(val, (list, tuple)):
+                    self.get_value(key, val, tmp_list)  # 传入数据的value值是列表或者元组，则调用get_value
+        else:
+            for value in dic.values():  # 传入数据不符合则对其value值进行遍历
+                if isinstance(value, dict):
+                    self.get_target_value(key, value, tmp_list)  # 传入数据的value值是字典，则直接调用自身
+                elif isinstance(value, (list, tuple)):
+                    self.get_value(key, value, tmp_list)  # 传入数据的value值是列表或者元组，则调用get_value
+
+        return tmp_list
+
+    def get_value(self, key, val, tmp_list):
+        for val_ in val:
+            if isinstance(val_, dict):
+                self.get_target_value(key, val_, tmp_list)  # 传入数据的value值是字典，则调用get_target_value
+            elif isinstance(val_, (list, tuple)):
+                self.get_value(key, val_, tmp_list)
+
+    # 默认传入的key_lists是空的, dic是response.json()
+    def get_target_key(self, dic, key_lists):
+        for i in dic.keys():
+            key_lists.append(i)
+            if isinstance(dic[i], dict):
+                self.get_target_key(dic[i], key_lists)
+            elif isinstance(dic[i], (list, tuple)):
+                self.get_key(dic[i], key_lists)
+
+            # for val in dic.values():
+            #     if isinstance(val, dict):
+            #         self.get_target_key(val, key_list)
+            #     elif isinstance(val, (list, tuple)):
+            #         self.get_key(val, key_list)
+        return set(key_lists)
+
+    def get_key(self, val, key_lists):
+        for val_ in val:
+            if isinstance(val_, dict):
+                self.get_target_key(val_, key_lists)  # 传入数据的value值是字典，则调用get_target_value
+            elif isinstance(val_, (list, tuple)):
+                self.get_key(val_, key_lists)
+
