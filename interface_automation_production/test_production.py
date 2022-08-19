@@ -1,8 +1,8 @@
 import allure
 import pytest
-from interface_automation_production.common.judgeassert_util import Judgeassert
-from interface_automation_production.common.yaml_util import YamlUtil
-from interface_automation_production.common.requests_util import RequestsUtil
+from git_open.interface_automation_production.common.judgeassert_util import Judgeassert
+from git_open.interface_automation_production.common.yaml_util import YamlUtil
+from git_open.interface_automation_production.common.requests_util import RequestsUtil
 
 
 judge = Judgeassert()

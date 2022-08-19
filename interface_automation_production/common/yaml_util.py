@@ -3,13 +3,14 @@ import yaml
 import re
 import ast
 import json
-
+import ast
 
 class YamlUtil:
 
+
     # 读取extract.yml的yaml文件
     def read_extract_yaml(self, yaml_name):
-        with open(os.getcwd() + "interface_automation_production/testcase/" + yaml_name,
+        with open(r"C:/Users/DELL/PycharmProjects/selenium_test/interface_automation_production/testcase/" + yaml_name,
                   mode='r', encoding='utf-8') as f:
             value = yaml.load(stream=f, Loader=yaml.FullLoader)
             # return value[key]
@@ -28,23 +29,41 @@ class YamlUtil:
 
     # 读取case用例yaml文件
     def read_testcase_yaml(self, yaml_name):
-        with open(os.getcwd() + "interface_automation_production/testcase" + yaml_name,
+        with open(r"C:/Users/DELL/PycharmProjects/selenium_test/interface_automation_production/testcase/" + yaml_name,
                   mode='r',
                   encoding='utf-8') as f:
             value = yaml.load(stream=f, Loader=yaml.FullLoader)
             # value = f.read()
-        return value
+            # print('this is value ', value)
+            result = self.change_token(value)
+
+        return result
+
+    # 读取case用例yaml文件
+    def read_token_yaml(self, yaml_name):
+        with open(
+                r"C:/Users/DELL/PycharmProjects/selenium_test/interface_automation_production/" + yaml_name,
+                mode='r',
+                encoding='utf-8') as f:
+            value = yaml.load(stream=f, Loader=yaml.FullLoader)
+            # value = f.read()
+            # print('this is value ', value)
+            result = self.change_token(value)
+
+        return result
 
     def change_token(self, data):
 
-        # 从读取到的文件查询出token
-        aa = re.findall(r'\${token}', str(data))
-        for i in aa:
-            a = str(data).replace(i, str(self.read_ini_yaml()['token']))
-            return a
+        # 替换token
+        get_token = YamlUtil().read_ini_yaml()['token']
+        result = re.sub(r'\$token', get_token, str(data))
+        r = ast.literal_eval(result)
+        # print('ini token', get_token, type(result), type(r))
+        return r
 
+    # 读取配置文件token
     def read_ini_yaml(self):
-        with open(os.getcwd() + "interface_automation_production/ini.yml", mode='r', encoding='utf-8') as f:
+        with open(os.path.abspath('.')+r"/ini.yml", mode='r', encoding='utf-8') as f:
             value = yaml.load(f, Loader=yaml.FullLoader)
         return value
 
@@ -66,6 +85,7 @@ class YamlUtil:
             final_list.append(new_line)
         return final_list
 
+    # 暂时不用
     def read_lines(self):
         with open(os.path.dirname(os.getcwd()) + r'/testcase/adminMalfunctionList.yml', mode='r', encoding='utf-8') as f:
             value = f.readlines()

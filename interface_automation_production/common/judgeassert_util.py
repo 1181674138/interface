@@ -3,10 +3,12 @@ import json
 import requests
 import re
 
-tmp = []
-key_list = []
 
 class Judgeassert:
+
+    def __init__(self):
+        self.tmp = []
+        self.key_list = []
 
     """
     1、json_result是response返回的json字符串，read_yaml_assert是读取到yaml里的断言字符串
@@ -31,14 +33,11 @@ class Judgeassert:
 
     # 断言等于
     def eq_assert(self, json_result, read_yaml_assert):
-        if 'eq' in read_yaml_assert:
-            for i in read_yaml_assert['eq']:
-                if read_yaml_assert['eq'][i] == json_result[i]:
-                    assert True
-                else:
-                    assert False
-        else:
-            pass
+        read_yaml_assert = read_yaml_assert['eq']
+        result = self.ergodic_(json_result, [])
+        for ii in read_yaml_assert:
+            assert ii in result
+        self.eq_qq(json_result, read_yaml_assert)
 
     # 断言包含
     def contain_assert(self, json_result, read_yaml_assert):
@@ -49,7 +48,7 @@ class Judgeassert:
 
     # 断言字段不为空
     def notnull_assert(self, json_result, read_yaml_assert):
-
+        key_list = []
         if 'not_null' in read_yaml_assert:
 
             # 获取到断言里不为空的key的value
@@ -62,14 +61,16 @@ class Judgeassert:
 
             get_key_list = list(self.get_target_key(json_result, key_list))
             for j in read_yaml_assert['not_null']:
-                print(j)
-                print(get_key_list)
+                # print(j)
+                # print(get_key_list)
                 assert j in get_key_list
         else:
             pass
 
     # 只作判断
     def ttt(self, json_result, read_yaml_assert):
+
+        tmp = []
 
         key = read_yaml_assert['not_null']
         # key = read_yaml_assert
@@ -79,6 +80,7 @@ class Judgeassert:
         elif type(key) == list:
             for i in key:
                 self.get_target_value(i, json_result, tmp)
+        # print('this is tmp', self.tmp)
         return tmp
 
     # 遍历value，返回传入的key对于的value
@@ -89,8 +91,10 @@ class Judgeassert:
         :param tmp_list: 用于存储获取的数据
         :return: list
         """
-        if not isinstance(dic, dict) or not isinstance(tmp_list, list):  # 对传入数据进行格式校验
-            return 'argv[1] not an dict or argv[-1] not an list '
+
+        # if not isinstance(dic, dict) or not isinstance(tmp_list, list):  # 对传入数据进行格式校验
+        #     return 'argv[1] not an dict or argv[-1] not an list '
+
         if key in dic.keys():
             tmp_list.append(dic[key])  # 传入数据存在则存入tmp_list
             for val in dic.values():
@@ -128,6 +132,7 @@ class Judgeassert:
             #         self.get_target_key(val, key_list)
             #     elif isinstance(val, (list, tuple)):
             #         self.get_key(val, key_list)
+
         return set(key_lists)
 
     def get_key(self, val, key_lists):
@@ -136,4 +141,48 @@ class Judgeassert:
                 self.get_target_key(val_, key_lists)  # 传入数据的value值是字典，则调用get_target_value
             elif isinstance(val_, (list, tuple)):
                 self.get_key(val_, key_lists)
+
+    def eq_qq(self, json_result, read_yaml_assert):
+
+        for i in read_yaml_assert:
+            # print(i, read_yaml_assert[i])
+            if i in json_result:
+                # print('1*')
+                assert json_result[i] == read_yaml_assert[i]
+            else:
+                for j in json_result.values():
+                    if isinstance(j, dict):
+                        self.eq_qq(j, read_yaml_assert)
+                    elif isinstance(j, (list, tuple)):
+                        self.list_tuple_loop(j, read_yaml_assert)
+
+    def list_tuple_loop(self, json_result, read_yaml_assert):
+
+        for val_ in json_result:
+            if isinstance(val_, dict):
+                self.eq_qq(val_, read_yaml_assert)
+            elif isinstance(val_, (tuple, list)):
+                self.list_tuple_loop(val_, read_yaml_assert)
+
+    def ergodic_(self, dic, result):
+        for i in dic:
+            result.append(i)
+            if isinstance(dic[i], dict):
+                self.ergodic_(dic[i], result)
+            elif isinstance(dic[i], (tuple, list)):
+                self.ergodic_tuple_list(dic[i], result)
+        return result
+
+    def ergodic_tuple_list(self, dic, result):
+        for val_ in dic:
+            if isinstance(val_, dict):
+                self.ergodic_(val_, result)
+            elif isinstance(val_, (tuple, list)):
+                self.ergodic_tuple_list(val_, result)
+
+
+judge = Judgeassert()
+json_result = {'msg': '获取成功', 'code': 0, 'data': {'taskId': '1539159199623262208', 'phonenumber': '15258830878',
+                                                  'powerPhotoState': 1, 'isWorkOrder': 1, 'ebike_type': None, 'key': '', 'imei': '', 'ebike_id': '', 'ebike_no': ''}}
+read_yaml_assert_eq = {'msg': '获取成功', 'code': 0, 'isWorkOrder': 1}
 

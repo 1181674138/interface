@@ -4,7 +4,7 @@
   url: xxx
   param_type: FORM
   data:
-    token:
+    token: $token
     id:
   assert:
     contain:

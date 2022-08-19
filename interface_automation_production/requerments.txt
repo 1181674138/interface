@@ -2,4 +2,4 @@ requests
 pyyaml
 pytest
 allure
-
+jsonpath
