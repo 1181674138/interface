@@ -180,9 +180,3 @@ class Judgeassert:
             elif isinstance(val_, (tuple, list)):
                 self.ergodic_tuple_list(val_, result)
 
-
-judge = Judgeassert()
-json_result = {'msg': '获取成功', 'code': 0, 'data': {'taskId': '1539159199623262208', 'phonenumber': '15258830878',
-                                                  'powerPhotoState': 1, 'isWorkOrder': 1, 'ebike_type': None, 'key': '', 'imei': '', 'ebike_id': '', 'ebike_no': ''}}
-read_yaml_assert_eq = {'msg': '获取成功', 'code': 0, 'isWorkOrder': 1}
-
